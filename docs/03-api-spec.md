@@ -1,4 +1,4 @@
-﻿# 03 · REST API Specification
+# 03 · REST API Specification
 
 ## Base URL
 
@@ -252,5 +252,72 @@ Soft-delete a patient (sets `deleted_at = NOW()`).
     "required": ["first_name","last_name","date_of_birth","sex","phone_number",
                  "address_line_1","city","state","zip_code"]
   }
+}
+```
+
+---
+
+## Vapi Webhook Integration
+
+### POST /vapi/register-patient
+
+Dedicated webhook endpoint designed specifically for Vapi.ai's tool-calling protocol.
+
+- **Authentication:** Validates `x-vapi-secret` or `Authorization: Bearer <secret>` against `VAPI_WEBHOOK_SECRET` (if configured on the server). Returns 401 if invalid.
+- **Request Format:** Accepts Vapi's nested `tool-calls` event envelope containing `message.toolCalls[0].function.arguments`.
+- **Validation:** Validates extracted arguments against `PatientCreate`.
+- **Database Persistence:** Reuses `create_patient_record` service to insert and flush to Postgres.
+
+**Request Example (from Vapi.ai):**
+```json
+{
+  "message": {
+    "type": "tool-calls",
+    "toolCalls": [
+      {
+        "id": "call_123456",
+        "type": "function",
+        "function": {
+          "name": "register_patient",
+          "arguments": {
+            "first_name": "Jane",
+            "last_name": "Doe",
+            "date_of_birth": "1990-05-15",
+            "sex": "female",
+            "phone_number": "+15551234567",
+            "address_line_1": "123 Main St",
+            "city": "Austin",
+            "state": "TX",
+            "zip_code": "78701"
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+**Success Response (HTTP 200):**
+```json
+{
+  "results": [
+    {
+      "toolCallId": "call_123456",
+      "result": "Patient Jane Doe has been successfully registered with ID 4dfd9d5b-d8f4-4850-9e53-1315fe53ef86."
+    }
+  ]
+}
+```
+
+**Validation Error Response (HTTP 200):**
+Returns HTTP 200 with the error message in the `results` array so Vapi's voice assistant speaks the error back to the caller instead of crashing with an unhandled webhook error:
+```json
+{
+  "results": [
+    {
+      "toolCallId": "call_123456",
+      "result": "Registration failed: phone_number must be in E.164 format (e.g. +15551234567)."
+    }
+  ]
 }
 ```

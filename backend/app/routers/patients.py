@@ -1,4 +1,4 @@
-﻿"""
+"""
 app/routers/patients.py
 -----------------------
 FastAPI REST router for patient registration CRUD operations.
@@ -27,6 +27,7 @@ from app.schemas import (
     PatientResponse,
     PatientUpdate,
 )
+from app.services.patient_service import create_patient_record
 
 router = APIRouter(prefix="/patients", tags=["patients"])
 
@@ -149,13 +150,9 @@ async def create_patient(
 ) -> APIResponse:
     """
     Register a new patient record.
-    Called by Vapi.ai tool register_patient upon caller confirmation.
+    Standard REST endpoint per docs/03-api-spec.md.
     """
-    patient = Patient(**payload.model_dump())
-    db.add(patient)
-    await db.flush()
-    await db.refresh(patient)
-
+    patient = await create_patient_record(db, payload)
     return APIResponse(data=PatientResponse.model_validate(patient), error=None)
 
 

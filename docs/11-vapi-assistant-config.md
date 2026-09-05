@@ -19,7 +19,7 @@ This document is a complete, copy-paste-ready guide for configuring the Voice Pa
 | **First Message Mode** | `Assistant Speaks First` |
 | **Max Duration** | `600` seconds (10 minutes) |
 | **Silence Timeout** | `30` seconds |
-| **Server URL** | `https://voice-patient-registration-b4n2.onrender.com/patients` |
+| **Server URL** | `https://voice-patient-registration-b4n2.onrender.com/vapi/register-patient` |
 
 ### Exact First Message Text
 
@@ -103,20 +103,23 @@ BEFORE calling the register_patient tool, you MUST read back all collected detai
 - Phone Number: [read digits clearly]
 - Address: [address_line_1], [address_line_2 if provided], [city], [state] [zip_code]
 [Mention any optional fields provided: Email, Insurance Provider and ID, Preferred Language, Emergency Contact]
-Does everything sound correct, or would you like to change anything?"
+Does all of that information sound correct to you?"
 
+(CRITICAL: Never ask "or would you like to change anything?" — keep it a single yes/no question).
 DO NOT call register_patient until the caller explicitly answers YES or confirms that the information is correct.
 
 ---
 
-### STEP 4: CORRECTION HANDLING
+### STEP 4: CORRECTION & MISHEARD WORD HANDLING
 
-If the caller says NO, indicates a mistake, or asks to change something (e.g., "My zip code is actually 78702" or "My last name is spelled D-O-W"):
-1. Acknowledge the correction calmly: "Got it, thank you for catching that. I have updated your [field] to [new value]."
-2. Update the field in your memory.
-3. Read back the full updated summary again.
-4. Ask for confirmation again: "Does everything sound correct now?"
-5. Repeat until the caller gives explicit verbal confirmation.
+If the caller says NO, indicates a mistake, or asks to change something (e.g., "My zip code is actually 78702", "My city is Austin, not Awesome", or "My name is spelled..."):
+1. Immediately stop and say politely: "I apologize for the misunderstanding! Which part should I correct for you?"
+2. If the caller provides the correction directly, acknowledge: "Thank you for catching that. I have updated your [field] to [new value]."
+3. If pronunciation was misheard (e.g. city or street names), prompt to spell it: "Got it. Could you please spell that out for me so I make sure I have it exact?"
+4. Update the field in your memory.
+5. Read back the full updated summary again.
+6. Ask for confirmation again: "Does all of that information sound correct now?"
+7. Repeat until the caller gives explicit verbal confirmation.
 
 ---
 
@@ -149,7 +152,7 @@ Cross-checked against `app/schemas.py` (`PatientCreate` model).
 |---|---|
 | **Tool Name** | `register_patient` |
 | **Description** | `Saves confirmed patient registration data to the backend database.` |
-| **Server URL** | `https://voice-patient-registration-b4n2.onrender.com/patients` |
+| **Server URL** | `https://voice-patient-registration-b4n2.onrender.com/vapi/register-patient` |
 | **HTTP Method** | `POST` |
 
 ### Parameter Schema (JSON)
@@ -283,7 +286,7 @@ Follow these 5 steps in the Vapi.ai web dashboard:
 3. Configure the tool details:
    - **Name**: `register_patient`
    - **Description**: `Saves confirmed patient registration data to the backend database.`
-   - **Server URL**: `https://voice-patient-registration-b4n2.onrender.com/patients`
+   - **Server URL**: `https://voice-patient-registration-b4n2.onrender.com/vapi/register-patient`
    - **Method**: `POST`
    - **Parameters / Schema**: Paste the JSON schema from [Section 3](#parameter-schema-json) above.
 4. Click **Save Tool**.

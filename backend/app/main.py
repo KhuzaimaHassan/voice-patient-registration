@@ -19,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
-from app.routers import patients
+from app.routers import patients, vapi_webhook
 from app.schemas import APIResponse
 
 # ---------------------------------------------------------------------------
@@ -202,3 +202,4 @@ async def health() -> APIResponse:
 # ---------------------------------------------------------------------------
 
 app.include_router(patients.router)
+app.include_router(vapi_webhook.router)
