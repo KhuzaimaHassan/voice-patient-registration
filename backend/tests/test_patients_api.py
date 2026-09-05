@@ -1,4 +1,4 @@
-﻿"""
+"""
 tests/test_patients_api.py
 --------------------------
 Integration tests for the /patients CRUD endpoints.
@@ -8,10 +8,25 @@ import pytest
 import uuid
 
 @pytest.mark.asyncio
+async def test_root_endpoint(client):
+    res = await client.get("/")
+    assert res.status_code == 200
+    res_json = res.json()
+    assert res_json["error"] is None
+    assert res_json["data"]["status"] == "ok"
+    assert res_json["data"]["health_check"] == "/health"
+
+@pytest.mark.asyncio
 async def test_health_check(client):
     res = await client.get("/health")
     assert res.status_code == 200
     assert res.json() == {"data": {"status": "ok"}, "error": None}
+
+@pytest.mark.asyncio
+async def test_unknown_route_returns_envelope_404(client):
+    res = await client.get("/nonexistent-page")
+    assert res.status_code == 404
+    assert res.json() == {"data": None, "error": "Not Found"}
 
 @pytest.mark.asyncio
 async def test_patient_full_lifecycle(client):

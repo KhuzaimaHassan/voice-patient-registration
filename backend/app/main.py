@@ -119,19 +119,23 @@ async def validation_exception_handler(
     )
 
 
-@app.exception_handler(HTTPException)
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+
+@app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(
     request: Request,
-    exc: HTTPException,
+    exc: StarletteHTTPException,
 ) -> JSONResponse:
     """
     Handle HTTP exceptions (e.g. 404, 403) ensuring {"data": null, "error": "..."}.
+    Covers both FastAPI-raised HTTPExceptions and Starlette routing 404s.
     """
     message = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
     return JSONResponse(
         status_code=exc.status_code,
         content={"data": None, "error": message},
-        headers=exc.headers,
+        headers=getattr(exc, "headers", None),
     )
 
 
@@ -153,9 +157,30 @@ async def generic_exception_handler(
 
 
 # ---------------------------------------------------------------------------
-# Health endpoint
-# GET /health — returns 200 {"data": {"status": "ok"}, "error": null}
+# Root & Health endpoints
 # ---------------------------------------------------------------------------
+
+@app.get(
+    "/",
+    response_model=APIResponse,
+    summary="Root service status",
+    tags=["system"],
+)
+async def root() -> APIResponse:
+    """
+    Returns service metadata and available endpoints.
+    """
+    return APIResponse(
+        data={
+            "name": "Voice Patient Registration API",
+            "status": "ok",
+            "version": "0.1.0",
+            "health_check": "/health",
+            "patients": "/patients",
+        },
+        error=None,
+    )
+
 
 @app.get(
     "/health",
