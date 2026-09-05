@@ -12,7 +12,7 @@ Callers dial a real U.S. phone number and speak with an empathetic, conversation
 - **Live API Base URL**: [https://voice-patient-registration-b4n2.onrender.com](https://voice-patient-registration-b4n2.onrender.com)
 - **Interactive Swagger Docs**: [https://voice-patient-registration-b4n2.onrender.com/docs](https://voice-patient-registration-b4n2.onrender.com/docs)
 - **Health Check**: [https://voice-patient-registration-b4n2.onrender.com/health](https://voice-patient-registration-b4n2.onrender.com/health)
-- **Vapi Inbound Phone Number**: `[YOUR VAPI PHONE NUMBER]` *(Assigned via Vapi Free Number)*
+- **Vapi Inbound Phone Number**: `+1 (346) 344-1337` *(Assigned via Vapi Free Number)*
 
 ---
 
