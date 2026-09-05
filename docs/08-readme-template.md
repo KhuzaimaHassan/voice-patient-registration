@@ -1,4 +1,4 @@
-﻿# 08 · README Template
+# 08 · README Template
 
 > Copy this file to `README.md` in the project root and fill in the bracketed placeholders.
 
@@ -14,9 +14,9 @@ information and persists it to a database.
 ## Architecture
 
 ```
-Twilio (PSTN) → Vapi.ai (voice orchestration) → Groq/Llama 3.3 70B (LLM)
+PSTN Caller → Free Vapi Number (Telephony) → Vapi.ai (Soniox STT + GPT Mini / Groq + Vapi Voice)
                                                         |
-                                              FastAPI Backend (Render.com)
+                                              FastAPI Backend (Render.com: /vapi/register-patient)
                                                         |
                                               Supabase Postgres
 ```
@@ -26,27 +26,28 @@ Twilio (PSTN) → Vapi.ai (voice orchestration) → Groq/Llama 3.3 70B (LLM)
 - Natural voice registration flow with re-prompts on invalid input
 - Reads back all data for caller confirmation before saving
 - Handles corrections and loops until confirmed
+- Cost-optimized (Soniox STT at 1.8% WER, GPT Mini, Vapi Voice at ~$0.065/min)
 - Optional field batch (email, insurance, emergency contact)
 - Soft-delete via `deleted_at` — no data permanently lost
-- Bonus: duplicate caller detection by phone number
+- Dedicated Vapi tool-call webhook (`/vapi/register-patient`) + public REST API (`/patients`)
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | Voice platform | Vapi.ai |
-| Phone number | Twilio trial |
-| LLM | Groq — Llama 3.3 70B |
-| Backend | FastAPI + SQLAlchemy |
-| Database | Supabase Postgres |
-| Hosting | Render.com |
+| Phone number | Free Vapi Number (US PSTN) |
+| Speech-to-Text | Soniox STT RT v5 (1.8% WER) |
+| LLM | GPT-5 Mini / GPT-4o Mini (or Groq Llama 3.3 70B) |
+| Voice (TTS) | Vapi Elliot v2 / Clara v2 |
+| Backend | FastAPI + SQLAlchemy (async) |
+| Database | Supabase Postgres (PgBouncer pooler) |
+| Hosting | Render.com free Web Service |
 
 ## Prerequisites
 
 - Python 3.11+
-- Twilio trial account
 - Vapi.ai free account
-- Groq free API key
 - Supabase free project
 - Render.com free account
 

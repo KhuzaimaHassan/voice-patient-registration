@@ -198,10 +198,12 @@ Rules:
 ## Vapi Assistant Configuration Checklist
 
 - [ ] Assistant name: "Patient Registration Assistant"
-- [ ] Voice: select a clear, neutral U.S. English voice
-- [ ] LLM: Custom LLM → Groq → `llama-3.3-70b-versatile`
-- [ ] First message: "Hello! Welcome to the patient registration line..."
-- [ ] Tool: `register_patient` → Server URL: `https://<render-app>.onrender.com/patients`
+- [ ] Preset: Cost Saver (Soniox STT RT v5 + GPT-5/4o Mini + Elliot/Clara v2)
+- [ ] Voice: Elliot v2 or Clara v2 ($0.02/min)
+- [ ] Transcriber: Soniox STT RT v5 (1.8% WER)
+- [ ] LLM: GPT-5 Mini / GPT-4o Mini (or Groq Llama 3.3 70B)
+- [ ] First message: "Hello! Thank you for calling patient registration..."
+- [ ] Tool: `register_patient` → Server URL: `https://voice-patient-registration-b4n2.onrender.com/vapi/register-patient`
 - [ ] Phone number: Free Vapi Number (US area code) created in dashboard
 - [ ] End call after confirmation message: enabled
 - [ ] Recording: disabled (HIPAA consideration)

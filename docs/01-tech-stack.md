@@ -1,14 +1,14 @@
-﻿# 01 · Tech Stack
+# 01 · Tech Stack
 
 ## Summary Table
 
 | Layer | Technology | Version / Plan | Why |
 |-------|-----------|----------------|-----|
-| Voice platform | **Vapi.ai** | Free trial credits | Managed telephony + STT + TTS + LLM routing in one SDK |
-| Phone number | **Twilio** | Trial account | Real PSTN number; imports into Vapi |
-| LLM | **Groq — Llama 3.3 70B** | Free tier | Fast inference, high context window, tool-call support |
-| STT | Vapi default (Deepgram Nova 2) | Bundled | Low-latency, accurate |
-| TTS | Vapi default (ElevenLabs / PlayHT) | Bundled | Natural, low-latency voice |
+| Voice platform | **Vapi.ai** | Free trial credits ($10) | Managed telephony + STT + TTS + LLM routing + webhooks |
+| Phone number | **Free Vapi Number** | Included in Vapi trial | Native US PSTN number directly in dashboard (no Twilio needed) |
+| LLM | **GPT-5 Mini / GPT-4o Mini** *(or Groq Llama 3.3 70B)* | Cost Saver preset | High intelligence (14), ultra-reliable tool calling, $0.01/min |
+| STT | **Soniox (STT RT v5)** | Bundled ($0.004/min) | Best accent accuracy (1.8% Word Error Rate vs 3.3% Deepgram) |
+| TTS | **Vapi Elliot v2 / Clara v2** | Bundled ($0.02/min) | Natural, low-latency voice, avoids expensive ElevenLabs rates |
 | API framework | **FastAPI** | Latest stable | Async, auto-docs, Pydantic validation |
 | ORM | **SQLAlchemy 2.x** | Latest stable | Pythonic, supports async; pairs well with FastAPI |
 | DB migrations | **Alembic** | Latest stable | Tracks schema changes; integrates with SQLAlchemy |
@@ -25,11 +25,10 @@
 
 | Service | Limit | Impact |
 |---------|-------|--------|
-| Groq free | 30 req/min, 6 000 tokens/min | Fine for demo/low volume |
-| Vapi free | Trial credits (~$10) | Enough for 30–60 test calls |
-| Twilio trial | $15.50 credit; calls to verified numbers only | Restrict test callers to verified numbers |
-| Supabase free | 500 MB storage, 2 direct connections | Use connection pooling (PgBouncer) |
-| Render free | 750 h/month, spins down after 15 min idle | Add keep-alive ping |
+| Vapi Cost Saver | ~$0.065 – $0.08 / min total | ~$0.31 per 5-min call (~60+ mins of testing with $5 credit) |
+| Free Vapi Number | Up to 5 free US numbers | Inbound calling from any phone without restrictions |
+| Supabase free | 500 MB storage, connection pooler (port 6543) | Prepared statement cache disabled for PgBouncer |
+| Render free | 750 h/month, spins down after 15 min idle | UptimeRobot keep-alive ping on /health prevents cold starts |
 
 ---
 

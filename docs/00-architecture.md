@@ -18,13 +18,13 @@ Free Vapi U.S. Phone Number
      ▼
 Vapi.ai Platform
   ├─ Telephony layer (Native Vapi voice gateway)
-  ├─ STT engine  (Deepgram Nova-2)
-  ├─ TTS engine  (Vapi / ElevenLabs / Cartesia)
-  └─ LLM  ──────►  Groq API  (Llama 3.3 70B)
+  ├─ STT engine  (Soniox STT RT v5 — 1.8% WER, accent-optimized)
+  ├─ TTS engine  (Vapi Elliot v2 / Clara v2)
+  └─ LLM  ──────►  OpenAI GPT-5/4o Mini (or Groq Llama 3.3 70B)
               │
               │  Tool call: register_patient
               ▼
-       FastAPI Backend  (Render.com free Web Service)
+       FastAPI Backend  (Render.com free Web Service: /vapi/register-patient)
               │
               ▼
        Supabase Postgres  (free tier)
@@ -38,8 +38,10 @@ Vapi.ai Platform
 |-----------|------|-----------|
 | **Vapi Free Number** | Native PSTN U.S. phone number & voice gateway | Yes – included in Vapi trial |
 | **Vapi.ai** | Orchestrates telephony + STT + TTS + LLM + tools | Yes – free trial credits ($10) |
-| **Groq API** | Ultra-low latency LLM inference (Llama 3.3 70B) | Yes – free tier |
-| **FastAPI** | REST API, validation, business logic | n/a (code) |
+| **Soniox STT** | Speech-to-Text (1.8% WER, accent-tolerant, $0.004/min) | Bundled in Cost Saver |
+| **GPT-5/4o Mini** | Conversational reasoning & tool argument generation | Bundled in Cost Saver ($0.01/min) |
+| **Vapi Voice (Elliot/Clara)** | Natural, low-latency TTS audio ($0.02/min) | Bundled in Cost Saver |
+| **FastAPI** | REST API, validation, business logic, webhook | n/a (code) |
 | **SQLAlchemy** | ORM, schema migrations | n/a (library) |
 | **Supabase Postgres** | Persistent relational database | Yes – 500 MB free |
 | **Render.com** | Host the FastAPI app | Yes – free Web Service |
@@ -52,12 +54,12 @@ Vapi.ai Platform
 1. Caller dials Free Vapi Phone Number from any phone.
 2. Vapi answers natively via its telephony gateway.
 3. Vapi starts conversation with the configured assistant ("Patient Registration Assistant").
-4. Vapi transcribes speech (STT) and sends user utterance to Groq (Llama 3.3 70B).
+4. Vapi transcribes speech with Soniox STT and sends utterance to LLM (GPT Mini / Groq).
 5. LLM returns either:
      (a) A spoken reply (next question, read-back, confirmation)
      (b) A tool-call JSON: register_patient({...})
-6. Vapi executes the tool call by POSTing to FastAPI /patients on Render.
-7. FastAPI validates, writes to Supabase Postgres, returns { data, error }.
+6. Vapi executes the tool call by POSTing to FastAPI /vapi/register-patient on Render.
+7. FastAPI validates, writes to Supabase Postgres, returns { results: [...] }.
 8. Vapi speaks the confirmation message to the caller.
 9. Call ends cleanly.
 ```

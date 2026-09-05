@@ -9,17 +9,17 @@ This document is a complete, copy-paste-ready guide for configuring the Voice Pa
 
 ## 1. Assistant Core Settings & First Message
 
-| Setting | Value to Enter / Select |
-|---|---|
-| **Assistant Name** | `Patient Registration Assistant` |
-| **Model Provider** | Custom LLM (Groq Llama 3.3 70B) |
-| **Model** | `llama-3.3-70b-versatile` |
-| **Transcriber (STT)** | Deepgram (Nova-2 / medical or general) |
-| **Voice (TTS)** | Any natural U.S. English voice (e.g. 11labs *Rachel*, *Sarah*, or Azure *en-US-JennyNeural*) |
-| **First Message Mode** | `Assistant Speaks First` |
-| **Max Duration** | `600` seconds (10 minutes) |
-| **Silence Timeout** | `30` seconds |
-| **Server URL** | `https://voice-patient-registration-b4n2.onrender.com/vapi/register-patient` |
+| Setting | Value to Enter / Select | Notes |
+|---|---|---|
+| **Preset** | **Cost Saver** | **Recommended** — 3x cheaper (~$0.065/min vs $0.16/min) |
+| **Assistant Name** | `Patient Registration Assistant` | |
+| **Transcriber (STT)** | **Soniox (STT RT v5)** | **1.8% WER** (vs 3.3% Deepgram) — best accent recognition, $0.004/min |
+| **Model (LLM)** | **GPT-5 Mini / GPT-4o Mini** | Ultra-reliable tool calling, high intelligence, $0.01/min *(Groq Llama 3.3 70B also supported)* |
+| **Voice (TTS)** | **Elliot v2** or **Clara v2** | Natural, low-latency native Vapi voice ($0.02/min) |
+| **First Message Mode** | `Assistant Speaks First` | |
+| **Max Duration** | `600` seconds (10 minutes) | |
+| **Silence Timeout** | `30` seconds | |
+| **Server URL** | `https://voice-patient-registration-b4n2.onrender.com/vapi/register-patient` | Dedicated tool-calls webhook endpoint |
 
 ### Exact First Message Text
 
@@ -269,14 +269,16 @@ Follow these 5 steps in the Vapi.ai web dashboard:
 5. Click **Create**.
 6. Note down your assigned U.S. phone number (e.g., `+1 (XXX) XXX-XXXX`).
 
-### Step 3: Create the Assistant
+### Step 3: Create the Assistant (Using Cost Saver Preset)
 1. In the Vapi left sidebar, click **Assistants** → **Create Assistant** (choose **Blank Template**).
-2. Set the general settings:
-   - **Name**: `Patient Registration Assistant`
-   - **Transcriber**: Deepgram Nova-2
-   - **Model**: Select the `Groq Llama 3.3 70B` custom model created in Step 1.
-   - **Voice**: Choose a natural U.S. English voice (e.g., Cartesia, 11labs *Rachel*, or Azure *Jenny*).
-3. Set the conversation script:
+2. Set the name to `Patient Registration Assistant`.
+3. Under **Model Presets**, click **"Cost Saver"**:
+   - This automatically configures:
+     - **Transcriber**: `Soniox STT RT v5` (1.8% error rate, exceptional accuracy for names & accents, only $0.004/min).
+     - **Model**: `GPT-5 Mini / GPT-4o Mini` (or switch to `Groq Llama 3.3 70B` if using custom provider).
+     - **Voice**: `Elliot v2` or `Clara v2` ($0.02/min).
+   - This keeps your total call cost under **~$0.065 - $0.08 / min** (~67% cheaper than standard tiers!).
+4. Set the conversation script:
    - **First Message**: Paste the text from [Section 1](#exact-first-message-text) above.
    - **System Prompt**: Paste the literal text from [Section 2](#2-complete-llm-system-prompt) above.
 
