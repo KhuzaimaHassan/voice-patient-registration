@@ -14,8 +14,8 @@ This document is a complete, copy-paste-ready guide for configuring the Voice Pa
 | **Preset** | **Cost Saver** | **Recommended** — 3x cheaper (~$0.065/min vs $0.16/min) |
 | **Assistant Name** | `Patient Registration Assistant` | |
 | **Transcriber (STT)** | **Soniox (STT RT v5)** | **1.8% WER** (vs 3.3% Deepgram) — best accent recognition, $0.004/min |
-| **Model (LLM)** | **GPT-5 Mini / GPT-4o Mini** | Ultra-reliable tool calling, high intelligence, $0.01/min *(Groq Llama 3.3 70B also supported)* |
-| **Voice (TTS)** | **Elliot v2** or **Clara v2** | Natural, low-latency native Vapi voice ($0.02/min) |
+| **Model (LLM)** | **GPT-5 Mini via Vapi OpenAI integration** | Cost Saver preset — ultra-reliable tool calling, high intelligence, $0.01/min |
+| **Voice (TTS)** | **Elliot v2** | Natural, low-latency native Vapi voice ($0.02/min) |
 | **First Message Mode** | `Assistant Speaks First` | |
 | **Max Duration** | `600` seconds (10 minutes) | |
 | **Silence Timeout** | `30` seconds | |
@@ -43,7 +43,7 @@ You are a friendly, patient, and professional voice intake assistant for a U.S. 
 2. Keep spoken responses concise — one or two sentences at a time.
 3. NEVER use markdown, bullet points, asterisks, or formatting symbols in your spoken output.
 4. If the caller provides a name, repeat it back naturally with the next question (e.g., "Thank you, Jane. And what is your last name?").
-5. If the caller asks medical or clinical advice, politely decline: "I am only able to assist with registration. For medical questions or emergencies, please speak with a healthcare provider or dial 911."
+5. If the caller asks medical or clinical advice or completely off-topic questions, politely decline: "I am only able to assist with registration. For medical questions or emergencies, please speak with a healthcare provider or dial 911." NOTE: Do NOT use this deflection during field collection (e.g., if the caller's answer to a field is unclear or ambiguous; instead, re-prompt specifically for that field).
 6. Do NOT make up, assume, or hallucinate any patient details. If a value is unclear, ask the caller to clarify or spell it out.
 
 ---
@@ -61,6 +61,7 @@ Collect one field at a time. Do not skip ahead:
 4. sex:
    - Ask: "Are you male, female, or would you prefer other or prefer not to say?"
    - The value must map to one of: "male", "female", "other", "prefer_not_to_say".
+   - CRITICAL RE-PROMPT RULE: If the caller's answer is not one of the allowed options, or if they say "yes", or say anything ambiguous, you must NEVER trigger the generic off-topic deflection ("I'm only able to assist with registration..."). Instead, re-prompt specifically for the sex field: "Please say male, female, other, or prefer not to say."
 5. phone_number:
    - Ask for their 10-digit phone number with area code.
    - Format internally as E.164: +1 followed by 10 digits (e.g., +15551234567).
@@ -75,9 +76,10 @@ Collect one field at a time. Do not skip ahead:
 
 ---
 
-### STEP 2: OFFER OPTIONAL FIELDS
+### STEP 2: OFFER OPTIONAL FIELDS (MANDATORY STEP — DO NOT SKIP)
 
-Once all 9 required fields are collected, transition using this exact offer:
+CRITICAL: After collecting and confirming all 9 required fields, you MUST NOT jump straight to the final read-back. You MUST first ask the caller the optional-fields offer question verbatim:
+
 "Thank you! That covers the essential registration details. Would you like to provide a few optional details, such as an apartment or suite number, email address, insurance details, or an emergency contact?"
 
 - If the caller says NO, skips, or declines:
@@ -247,21 +249,9 @@ Copy and paste this exact JSON into the tool's parameter definition in Vapi:
 
 ## 4. Step-by-Step Vapi Dashboard Setup Checklist
 
-Follow these 5 steps in the Vapi.ai web dashboard:
+Follow these 4 steps in the Vapi.ai web dashboard:
 
-### Step 1: Add Custom LLM Provider (Groq Llama 3.3 70B)
-1. In the Vapi left sidebar, navigate to **Providers** (or **Models**).
-2. Click **Add Provider** or **Create Custom Model**.
-3. Fill in the fields:
-   - **Provider Name**: `Groq`
-   - **Base URL / Endpoint**: `https://api.groq.com/openai/v1/chat/completions`
-   - **Model**: `llama-3.3-70b-versatile`
-   - **Headers / API Key**:
-     - Header Key: `Authorization`
-     - Header Value: `Bearer <YOUR_GROQ_API_KEY>`
-4. Click **Save / Validate**.
-
-### Step 2: Create a Free Vapi Phone Number
+### Step 1: Create a Free Vapi Phone Number
 1. In the Vapi left sidebar, click **Phone Numbers**.
 2. Click **Create a Phone Number** (or **+ Buy / Add Number**).
 3. Select the **"Free Vapi Number"** tab.
@@ -269,20 +259,20 @@ Follow these 5 steps in the Vapi.ai web dashboard:
 5. Click **Create**.
 6. Note down your assigned U.S. phone number (e.g., `+1 (XXX) XXX-XXXX`).
 
-### Step 3: Create the Assistant (Using Cost Saver Preset)
+### Step 2: Create the Assistant (Using Cost Saver Preset)
 1. In the Vapi left sidebar, click **Assistants** → **Create Assistant** (choose **Blank Template**).
 2. Set the name to `Patient Registration Assistant`.
-3. Under **Model Presets**, click **"Cost Saver"**:
-   - This automatically configures:
-     - **Transcriber**: `Soniox STT RT v5` (1.8% error rate, exceptional accuracy for names & accents, only $0.004/min).
-     - **Model**: `GPT-5 Mini / GPT-4o Mini` (or switch to `Groq Llama 3.3 70B` if using custom provider).
-     - **Voice**: `Elliot v2` or `Clara v2` ($0.02/min).
-   - This keeps your total call cost under **~$0.065 - $0.08 / min** (~67% cheaper than standard tiers!).
+3. Under **Model Presets**, select **"Cost Saver"**:
+   - This automatically selects:
+     - **Transcriber**: `Soniox STT RT v5` (1.8% WER, accent-optimized, $0.004/min).
+     - **Model**: `GPT-5 Mini` via Vapi's OpenAI integration ($0.01/min).
+     - **Voice**: `Elliot v2` ($0.02/min native low-latency voice).
+   - Total call cost is **~$0.065 – $0.08 / min** (~3x cheaper than standard tiers, with zero external API key overhead).
 4. Set the conversation script:
    - **First Message**: Paste the text from [Section 1](#exact-first-message-text) above.
    - **System Prompt**: Paste the literal text from [Section 2](#2-complete-llm-system-prompt) above.
 
-### Step 4: Add the `register_patient` Tool
+### Step 3: Add the `register_patient` Tool
 1. In the assistant editor, navigate to the **Tools** or **Functions** section.
 2. Click **Add Tool** → **Create Custom Tool** (or **Function**).
 3. Configure the tool details:
@@ -293,13 +283,23 @@ Follow these 5 steps in the Vapi.ai web dashboard:
    - **Parameters / Schema**: Paste the JSON schema from [Section 3](#parameter-schema-json) above.
 4. Click **Save Tool**.
 
-### Step 5: Assign the Free Number and Test
+### Step 4: Assign the Free Number and Test
 1. Return to **Phone Numbers** in the sidebar.
-2. Click on the **Free Vapi Number** you generated in Step 2.
+2. Click on the **Free Vapi Number** you generated in Step 1.
 3. In the **Assistant** dropdown, select **Patient Registration Assistant**.
 4. Click **Save**.
-5. **Test Call**: Dial the phone number from any mobile phone or landline (no Twilio number verification needed!).
-   - Speak your details following the dialogue.
+5. **Test Call**: Dial the phone number from any phone.
+   - Speak your details following the prompt.
+   - Verify that the agent offers optional fields after collecting required fields.
    - Verify that the agent reads back the summary.
    - Confirm with "Yes, that is correct."
    - Check your live API via `GET https://voice-patient-registration-b4n2.onrender.com/patients` to see your new record created in Supabase!
+
+---
+
+## Appendix: Groq Llama 3.3 70B Alternative (Documented Fallback)
+
+The initial design considered Groq (`llama-3.3-70b-versatile`). While Cost Saver (GPT-5 Mini) is the active production choice due to lower cost ($0.31 vs $0.94) and superior tool calling, Groq can be connected if desired:
+1. Under **Providers**, add a Custom LLM Provider with Base URL `https://api.groq.com/openai/v1/chat/completions` and model `llama-3.3-70b-versatile`.
+2. Provide your Groq API key in the `Authorization: Bearer <KEY>` header.
+3. Under assistant settings, select your custom Groq provider.

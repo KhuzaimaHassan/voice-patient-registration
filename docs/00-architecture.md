@@ -19,8 +19,8 @@ Free Vapi U.S. Phone Number
 Vapi.ai Platform
   ├─ Telephony layer (Native Vapi voice gateway)
   ├─ STT engine  (Soniox STT RT v5 — 1.8% WER, accent-optimized)
-  ├─ TTS engine  (Vapi Elliot v2 / Clara v2)
-  └─ LLM  ──────►  OpenAI GPT-5/4o Mini (or Groq Llama 3.3 70B)
+  ├─ TTS engine  (Vapi Elliot v2)
+  └─ LLM         (GPT-5 Mini via Vapi OpenAI integration)
               │
               │  Tool call: register_patient
               ▼
@@ -38,9 +38,9 @@ Vapi.ai Platform
 |-----------|------|-----------|
 | **Vapi Free Number** | Native PSTN U.S. phone number & voice gateway | Yes – included in Vapi trial |
 | **Vapi.ai** | Orchestrates telephony + STT + TTS + LLM + tools | Yes – free trial credits ($10) |
-| **Soniox STT** | Speech-to-Text (1.8% WER, accent-tolerant, $0.004/min) | Bundled in Cost Saver |
-| **GPT-5/4o Mini** | Conversational reasoning & tool argument generation | Bundled in Cost Saver ($0.01/min) |
-| **Vapi Voice (Elliot/Clara)** | Natural, low-latency TTS audio ($0.02/min) | Bundled in Cost Saver |
+| **Soniox STT** | Speech-to-Text (`STT RT v5`, 1.8% WER, accent-tolerant, $0.004/min) | Bundled in Cost Saver |
+| **GPT-5 Mini** | Conversational reasoning & tool argument generation (Vapi OpenAI integration) | Bundled in Cost Saver ($0.01/min) |
+| **Vapi Elliot v2** | Natural, low-latency TTS audio ($0.02/min) | Bundled in Cost Saver |
 | **FastAPI** | REST API, validation, business logic, webhook | n/a (code) |
 | **SQLAlchemy** | ORM, schema migrations | n/a (library) |
 | **Supabase Postgres** | Persistent relational database | Yes – 500 MB free |
@@ -54,7 +54,7 @@ Vapi.ai Platform
 1. Caller dials Free Vapi Phone Number from any phone.
 2. Vapi answers natively via its telephony gateway.
 3. Vapi starts conversation with the configured assistant ("Patient Registration Assistant").
-4. Vapi transcribes speech with Soniox STT and sends utterance to LLM (GPT Mini / Groq).
+4. Vapi transcribes speech with Soniox STT and sends utterance to LLM (GPT-5 Mini via Vapi OpenAI integration).
 5. LLM returns either:
      (a) A spoken reply (next question, read-back, confirmation)
      (b) A tool-call JSON: register_patient({...})
@@ -81,11 +81,21 @@ After read-back, if caller says "no" or "fix ...":
 
 | Failure | Mitigation |
 |---------|-----------|
-| Groq API timeout | Vapi retry / fallback message |
+| Vapi / OpenAI API timeout | Vapi retry / fallback message |
 | FastAPI cold start on Render free | Keep-alive ping (UptimeRobot) |
 | Supabase connection limit | SQLAlchemy connection pool (max 5) |
 | Invalid field (bad DOB, bad phone) | LLM re-prompts; server-side 422 validation |
 | Duplicate phone number (bonus) | GET /patients?phone=... before POST |
+
+---
+
+## Architecture Decision: Vapi Cost Saver vs Groq Llama 3.3
+
+The initial design proposed using Groq (`llama-3.3-70b-versatile`) as an external custom LLM. During live voice testing, Vapi's native **"Cost Saver" preset** (Soniox STT RT v5 + GPT-5 Mini + Elliot v2) was selected for production:
+- **Acoustic Accuracy:** Soniox achieved a **1.8% Word Error Rate** vs 3.3% for Deepgram, drastically reducing errors on proper nouns, street addresses, and cities (e.g. hearing "Austin" instead of "Awesome").
+- **Tool Calling Precision:** GPT-5 Mini provided flawless, schema-compliant JSON extraction on the first pass without argument drops.
+- **Cost Efficiency:** Slashed 5-minute call costs from **$0.94** to **$0.31** (a 3x saving), billed seamlessly through Vapi's trial credits without managing multiple API keys.
+- **Fallback:** Groq remains fully supported as a custom provider if an open-weights LLM is required in the future.
 
 ---
 
@@ -103,5 +113,5 @@ After read-back, if caller says "no" or "fix ...":
 
 - Render free tier to paid tier when call volume grows.
 - Supabase free to paid (8 GB) when storage grows.
-- Groq free to paid for higher RPM limits.
+- Vapi wallet top-up / concurrency scaling when simultaneous call capacity exceeds free limits.
 - Add Redis queue if concurrent registrations spike.

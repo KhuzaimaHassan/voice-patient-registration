@@ -6,9 +6,9 @@
 |-------|-----------|----------------|-----|
 | Voice platform | **Vapi.ai** | Free trial credits ($10) | Managed telephony + STT + TTS + LLM routing + webhooks |
 | Phone number | **Free Vapi Number** | Included in Vapi trial | Native US PSTN number directly in dashboard (no Twilio needed) |
-| LLM | **GPT-5 Mini / GPT-4o Mini** *(or Groq Llama 3.3 70B)* | Cost Saver preset | High intelligence (14), ultra-reliable tool calling, $0.01/min |
+| LLM | **GPT-5 Mini via Vapi OpenAI Integration** | Cost Saver preset | High intelligence (14), native tool calling reliability, $0.01/min |
 | STT | **Soniox (STT RT v5)** | Bundled ($0.004/min) | Best accent accuracy (1.8% Word Error Rate vs 3.3% Deepgram) |
-| TTS | **Vapi Elliot v2 / Clara v2** | Bundled ($0.02/min) | Natural, low-latency voice, avoids expensive ElevenLabs rates |
+| TTS | **Vapi Elliot v2** | Bundled ($0.02/min) | Natural, low-latency voice, avoids expensive ElevenLabs rates |
 | API framework | **FastAPI** | Latest stable | Async, auto-docs, Pydantic validation |
 | ORM | **SQLAlchemy 2.x** | Latest stable | Pythonic, supports async; pairs well with FastAPI |
 | DB migrations | **Alembic** | Latest stable | Tracks schema changes; integrates with SQLAlchemy |
@@ -50,13 +50,15 @@ pytest-asyncio>=0.23.0
 
 ---
 
-## Vapi Custom LLM Provider Setup
+## Architecture Decision: Vapi Cost Saver (GPT-5 Mini) vs Groq Llama 3.3
 
-1. In Vapi dashboard → **Models** → **Custom LLM**.
-2. Set endpoint to `https://api.groq.com/openai/v1/chat/completions`.
-3. Set model to `llama-3.3-70b-versatile`.
-4. Add header `Authorization: Bearer {GROQ_API_KEY}`.
-5. Vapi forwards conversation messages in OpenAI chat format; Groq responds in OpenAI format.
+The initial architecture plan evaluated using Groq (`llama-3.3-70b-versatile`) as a custom LLM provider. However, during live testing, Vapi's native **"Cost Saver" preset** was adopted as the production stack for several decisive reasons:
+- **Speech-to-Text Accuracy:** Uses **Soniox (`STT RT v5`)**, which demonstrated a **1.8% Word Error Rate** (vs 3.3% for Deepgram Nova-2), dramatically improving pronunciation and accent comprehension (e.g. capturing cities and street names accurately without phonetic errors).
+- **Tool Calling Reliability:** OpenAI's **GPT-5 Mini** integration in Vapi features native function-calling with strict schema adherence, eliminating JSON parsing edge cases during registration.
+- **Cost & Latency:** The Cost Saver bundle (Soniox + GPT-5 Mini + Elliot voice) slashed live test call costs from **$0.94** to **$0.31** for a ~5-minute call (a 3x cost reduction), with average turn latency under 2 seconds.
+- **Unified Billing:** All voice components (telephony, STT, LLM, TTS) are billed directly through Vapi's wallet/trial credit without needing separate API key maintenance or rate-limit monitoring on external providers.
+
+*(Note: Groq was the original planned LLM and remains a documented fallback via Vapi's Custom LLM provider endpoint if self-hosted or open-weight models are required in the future).*
 
 ---
 

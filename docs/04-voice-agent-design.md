@@ -169,7 +169,7 @@ AGENT: Thank you, Jane. Have a great day. Goodbye!
 | `phone_number` | 10 digits after stripping formatting | "Could you repeat that phone number including the area code?" |
 | `state` | Must be a valid US state name or abbreviation | "Could you confirm the state? For example, say Texas or TX." |
 | `zip_code` | Exactly 5 digits (or 5+4) | "I need a 5-digit ZIP code. Could you repeat that?" |
-| `sex` | One of allowed values | "Please say male, female, other, or prefer not to say." |
+| `sex` | One of allowed values ("male", "female", "other", "prefer_not_to_say"). Ambiguous answers (e.g., "yes") must NOT trigger off-topic deflection. | "Please say male, female, other, or prefer not to say." |
 | `email` | Basic email pattern if provided | "That email did not sound right. Could you spell it out?" |
 
 ---
@@ -183,13 +183,13 @@ Your job is to collect patient registration information over the phone.
 Rules:
 1. Collect fields in the specified order.
 2. After receiving a value, repeat it back to confirm before moving on.
-3. If a value seems invalid (bad date, too few digits for phone, etc.), re-prompt once.
-4. After all required fields, offer optional fields.
+3. If a value seems invalid (bad date, too few digits for phone, ambiguous sex answer, etc.), re-prompt specifically for that field. Never use the generic off-topic deflection for field collection answers.
+4. After all required fields are confirmed, you MUST ask the caller the optional-fields offer question verbatim before proceeding to read-back (non-skippable step). Do not jump straight from ZIP code to final read-back.
 5. Before calling register_patient, read back ALL collected data and ask for confirmation.
 6. If the caller wants to correct a field, update it and read back all data again.
 7. Only call register_patient once the caller has explicitly confirmed all data is correct.
 8. Be concise, warm, and professional. Avoid medical jargon.
-9. If the caller asks something unrelated to registration, politely redirect them.
+9. If the caller asks something completely unrelated to registration (or asks medical advice), politely redirect them.
 10. Do not make up or assume any field values.
 ```
 
@@ -198,16 +198,21 @@ Rules:
 ## Vapi Assistant Configuration Checklist
 
 - [ ] Assistant name: "Patient Registration Assistant"
-- [ ] Preset: Cost Saver (Soniox STT RT v5 + GPT-5/4o Mini + Elliot/Clara v2)
-- [ ] Voice: Elliot v2 or Clara v2 ($0.02/min)
-- [ ] Transcriber: Soniox STT RT v5 (1.8% WER)
-- [ ] LLM: GPT-5 Mini / GPT-4o Mini (or Groq Llama 3.3 70B)
+- [ ] Preset: Cost Saver (Soniox STT RT v5 + GPT-5 Mini + Elliot v2)
+- [ ] Voice: Elliot v2 ($0.02/min native Vapi voice)
+- [ ] Transcriber: Soniox STT RT v5 (1.8% WER, accent-optimized, $0.004/min)
+- [ ] LLM: GPT-5 Mini via Vapi OpenAI integration ($0.01/min)
 - [ ] First message: "Hello! Thank you for calling patient registration..."
 - [ ] Tool: `register_patient` → Server URL: `https://voice-patient-registration-b4n2.onrender.com/vapi/register-patient`
 - [ ] Phone number: Free Vapi Number (US area code) created in dashboard
 - [ ] End call after confirmation message: enabled
 - [ ] Recording: disabled (HIPAA consideration)
 - [ ] Max call duration: 10 minutes
+
+> [!NOTE]
+> **Stack Trade-Off Note:** The assistant was originally designed to use Groq (`llama-3.3-70b-versatile`). In live testing, Vapi's Cost Saver preset (Soniox + GPT-5 Mini + Elliot) was adopted as it reduced call costs 3x (from $0.94 to $0.31 for ~5 mins), eliminated misheard addresses/cities via Soniox's 1.8% WER, and delivered deterministic tool calling. Groq remains a documented fallback.
+
+---
 
 ---
 
