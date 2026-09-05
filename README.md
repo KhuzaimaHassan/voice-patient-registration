@@ -61,7 +61,7 @@ PSTN Caller (Mobile / Landline)
 | **ORM & Migrations** | **SQLAlchemy 2.x + Alembic** | Async (`asyncpg`) | Async relational persistence, schema versioning, and constraint checks |
 | **Database** | **Supabase Postgres** | Free Tier (500 MB) | Managed PostgreSQL with PgBouncer connection pooler |
 | **Cloud Hosting** | **Render.com** | Free Web Service | Automated Git deploys with TLS termination and environment management |
-| **Testing** | **pytest + pytest-asyncio + httpx** | Latest | Unit and integration test suite (10/10 automated tests passing) |
+| **Testing** | **pytest + pytest-asyncio + httpx** | Latest | Unit and integration test suite (11/11 automated tests passing) |
 
 ---
 
@@ -183,7 +183,8 @@ pytest tests/ -v
 ```
 
 ### Test Coverage Highlights
-- **REST Endpoints (`tests/test_patients_api.py`)**:
+- **REST & System Endpoints (`tests/test_patients_api.py`)**:
+  - `GET /health` & `GET /docs` (health check and interactive OpenAPI Swagger UI availability)
   - `POST /patients` (successful creation & validation error handling)
   - `GET /patients` & `GET /patients/{id}` (fetching & soft-delete query exclusions)
   - `PUT /patients/{id}` (partial and full updates)

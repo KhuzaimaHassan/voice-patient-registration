@@ -23,6 +23,11 @@ async def test_health_check(client):
     assert res.json() == {"data": {"status": "ok"}, "error": None}
 
 @pytest.mark.asyncio
+async def test_swagger_docs_endpoint(client):
+    res = await client.get("/docs")
+    assert res.status_code == 200
+
+@pytest.mark.asyncio
 async def test_unknown_route_returns_envelope_404(client):
     res = await client.get("/nonexistent-page")
     assert res.status_code == 404
