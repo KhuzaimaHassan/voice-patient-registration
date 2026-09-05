@@ -141,6 +141,29 @@ async def test_vapi_register_patient_missing_required(client: AsyncClient, auth_
 
 
 @pytest.mark.asyncio
+async def test_vapi_register_patient_missing_tool_calls(client: AsyncClient, auth_headers: dict):
+    """
+    Vapi tool-call payload without toolCalls must be handled gracefully with 200
+    and an informative error in the results array.
+    """
+    vapi_payload = {
+        "message": {
+            "type": "tool-calls",
+            # missing toolCalls key completely
+        }
+    }
+
+    resp = await client.post("/vapi/register-patient", json=vapi_payload, headers=auth_headers)
+    assert resp.status_code == 200
+    body = resp.json()
+
+    assert "results" in body
+    item = body["results"][0]
+    assert item["toolCallId"] == "unknown"
+    assert "No toolCalls found in request" in item["result"]
+
+
+@pytest.mark.asyncio
 async def test_vapi_register_patient_secret_header(client: AsyncClient, monkeypatch):
     """
     If VAPI_WEBHOOK_SECRET is set, requests without matching X-Vapi-Secret

@@ -75,19 +75,18 @@ async def vapi_register_patient(
     """
     settings = get_settings()
 
-    # 1. Secret header authentication (if secret configured on server)
-    if settings.VAPI_WEBHOOK_SECRET and settings.VAPI_WEBHOOK_SECRET.strip():
-        expected_secret = settings.VAPI_WEBHOOK_SECRET.strip()
-        auth_header = request.headers.get("authorization", "")
-        bearer_token = auth_header.replace("Bearer ", "").replace("bearer ", "").strip()
-        provided_secret = (x_vapi_secret or "").strip() or bearer_token
+    # 1. Secret header authentication (strictly enforced)
+    expected_secret = (settings.VAPI_WEBHOOK_SECRET or "").strip()
+    auth_header = request.headers.get("authorization", "")
+    bearer_token = auth_header.replace("Bearer ", "").replace("bearer ", "").strip()
+    provided_secret = (x_vapi_secret or "").strip() or bearer_token
 
-        if provided_secret != expected_secret:
-            logger.warning("Vapi webhook unauthorized: invalid or missing secret header")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Unauthorized: invalid or missing X-Vapi-Secret or Authorization header.",
-            )
+    if not expected_secret or not provided_secret or provided_secret != expected_secret:
+        logger.warning("Vapi webhook unauthorized: invalid or missing secret header")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized: invalid or missing X-Vapi-Secret or Authorization header.",
+        )
 
     # 2. Parse request JSON body
     try:
@@ -124,10 +123,20 @@ async def vapi_register_patient(
             func = tool_call.get("function", {})
             if isinstance(func, dict):
                 raw_args = func.get("arguments", {})
-    else:
+    elif isinstance(body, dict) and "arguments" in body:
         # Fallback if arguments are sent at root
         tool_call_id = body.get("toolCallId") or body.get("id") or "unknown"
-        raw_args = body.get("arguments", body)
+        raw_args = body.get("arguments", {})
+    else:
+        logger.warning("Vapi tool-call payload missing toolCalls: %s", body)
+        return {
+            "results": [
+                {
+                    "toolCallId": "unknown",
+                    "result": "Registration failed: No toolCalls found in request.",
+                }
+            ]
+        }
 
     # If arguments were serialized as a JSON string by the LLM, deserialize them
     if isinstance(raw_args, str):

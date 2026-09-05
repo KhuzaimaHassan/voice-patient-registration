@@ -61,7 +61,7 @@ PSTN Caller (Mobile / Landline)
 | **ORM & Migrations** | **SQLAlchemy 2.x + Alembic** | Async (`asyncpg`) | Async relational persistence, schema versioning, and constraint checks |
 | **Database** | **Supabase Postgres** | Free Tier (500 MB) | Managed PostgreSQL with PgBouncer connection pooler |
 | **Cloud Hosting** | **Render.com** | Free Web Service | Automated Git deploys with TLS termination and environment management |
-| **Testing** | **pytest + pytest-asyncio + httpx** | Latest | Unit and integration test suite (9/9 automated tests passing) |
+| **Testing** | **pytest + pytest-asyncio + httpx** | Latest | Unit and integration test suite (10/10 automated tests passing) |
 
 ---
 
@@ -131,7 +131,7 @@ All REST endpoints return a standardized envelope:
 | `POST` | `/patients` | Create patient via standard REST body | None |
 | `PUT` | `/patients/{id}` | Update existing patient record | None |
 | `DELETE` | `/patients/{id}` | Soft-delete patient (`deleted_at` timestamp set) | None |
-| `POST` | `/vapi/register-patient` | Dedicated Vapi tool-call webhook endpoint | `X-Vapi-Secret` (Optional) |
+| `POST` | `/vapi/register-patient` | Dedicated Vapi tool-call webhook endpoint | `X-Vapi-Secret` (Required) |
 
 ---
 
