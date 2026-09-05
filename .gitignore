@@ -1,0 +1,94 @@
+﻿# ============================================================
+# voice-patient-registration — .gitignore
+# Python + environment files
+# ============================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+*.manifest
+*.spec
+
+# --- Virtual environments ---
+venv/
+.venv/
+ENV/
+env/
+.env/
+Env/
+
+# --- Environment / secrets ---
+.env
+.env.*
+!.env.example
+*.env
+secrets.json
+secrets.yaml
+secrets.yml
+credentials.json
+
+# --- Database ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- IDE and editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# --- Testing ---
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.coveragerc
+.tox/
+nosetests.xml
+test-results/
+
+# --- Alembic ---
+# Keep migrations tracked — do NOT ignore alembic/versions/
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+*.ipynb
+
+# --- OS ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# --- Render / deployment ---
+.render/
+
+# --- Misc ---
+*.bak
+*.tmp
+*.orig
