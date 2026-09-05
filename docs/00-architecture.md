@@ -1,4 +1,4 @@
-﻿# 00 · System Architecture
+# 00 · System Architecture
 
 ## Overview
 
@@ -9,17 +9,17 @@ A fully free-tier, voice-first patient registration pipeline. A caller dials a r
 ## High-Level Architecture Diagram
 
 ```
-Caller (PSTN)
+Caller (PSTN / Mobile / Landline)
      │
      ▼
-Twilio Trial Number
-(SIP trunk / voice gateway)
+Free Vapi U.S. Phone Number
+(Built-in Vapi telephony / SIP gateway)
      │
      ▼
 Vapi.ai Platform
-  ├─ Telephony layer (Twilio integration)
-  ├─ STT engine  (Vapi default / Deepgram)
-  ├─ TTS engine  (Vapi default / ElevenLabs)
+  ├─ Telephony layer (Native Vapi voice gateway)
+  ├─ STT engine  (Deepgram Nova-2)
+  ├─ TTS engine  (Vapi / ElevenLabs / Cartesia)
   └─ LLM  ──────►  Groq API  (Llama 3.3 70B)
               │
               │  Tool call: register_patient
@@ -36,9 +36,9 @@ Vapi.ai Platform
 
 | Component | Role | Free Tier |
 |-----------|------|-----------|
-| **Twilio Trial** | PSTN phone number, call routing | Yes – trial credits |
-| **Vapi.ai** | Orchestrates telephony + STT + TTS + LLM calls | Yes – free trial credits |
-| **Groq API** | LLM inference (Llama 3.3 70B) via Vapi custom LLM | Yes – free tier |
+| **Vapi Free Number** | Native PSTN U.S. phone number & voice gateway | Yes – included in Vapi trial |
+| **Vapi.ai** | Orchestrates telephony + STT + TTS + LLM + tools | Yes – free trial credits ($10) |
+| **Groq API** | Ultra-low latency LLM inference (Llama 3.3 70B) | Yes – free tier |
 | **FastAPI** | REST API, validation, business logic | n/a (code) |
 | **SQLAlchemy** | ORM, schema migrations | n/a (library) |
 | **Supabase Postgres** | Persistent relational database | Yes – 500 MB free |
@@ -49,17 +49,17 @@ Vapi.ai Platform
 ## Data Flow — Happy Path
 
 ```
-1. Caller dials Twilio number.
-2. Twilio routes call to Vapi.ai webhook/SIP.
-3. Vapi starts a conversation with the configured assistant.
-4. Vapi sends each user utterance to Groq (Llama 3.3 70B) as the LLM.
+1. Caller dials Free Vapi Phone Number from any phone.
+2. Vapi answers natively via its telephony gateway.
+3. Vapi starts conversation with the configured assistant ("Patient Registration Assistant").
+4. Vapi transcribes speech (STT) and sends user utterance to Groq (Llama 3.3 70B).
 5. LLM returns either:
-     (a) A spoken reply (next question / confirmation)
+     (a) A spoken reply (next question, read-back, confirmation)
      (b) A tool-call JSON: register_patient({...})
-6. Vapi executes the tool call by POSTing to FastAPI  /patients.
+6. Vapi executes the tool call by POSTing to FastAPI /patients on Render.
 7. FastAPI validates, writes to Supabase Postgres, returns { data, error }.
-8. Vapi reads the tool result back to the caller as confirmation.
-9. Call ends.
+8. Vapi speaks the confirmation message to the caller.
+9. Call ends cleanly.
 ```
 
 ---

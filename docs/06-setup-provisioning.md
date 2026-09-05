@@ -1,31 +1,18 @@
-﻿# 06 · Setup and Provisioning Guide
+# 06 · Setup and Provisioning Guide
 
 ## Prerequisites Checklist
 
 - [ ] Python 3.11+ installed locally
 - [ ] Git installed
 - [ ] GitHub account (for Render.com auto-deploy)
-- [ ] Twilio account (trial) — https://twilio.com
-- [ ] Vapi.ai account (free) — https://vapi.ai
+- [ ] Vapi.ai account (free trial) — https://vapi.ai
 - [ ] Groq account (free) — https://console.groq.com
 - [ ] Supabase account (free) — https://supabase.com
 - [ ] Render.com account (free) — https://render.com
 
 ---
 
-## Step 1 — Twilio Setup
-
-1. Sign up for a Twilio trial account at https://twilio.com.
-2. Verify your personal phone number (required for trial calls).
-3. Go to **Phone Numbers → Manage → Buy a number**.
-4. Search for a U.S. number with voice capability.
-5. Purchase the number using your $15.50 trial credit.
-6. Note down the number in E.164 format (e.g., `+15551234567`).
-7. **Do NOT configure the Twilio webhook** — Vapi will handle routing.
-
----
-
-## Step 2 — Groq Setup
+## Step 1 — Groq Setup (Custom LLM)
 
 1. Sign up at https://console.groq.com.
 2. Go to **API Keys** → **Create API Key**.
@@ -35,41 +22,43 @@
 
 ---
 
-## Step 3 — Vapi.ai Setup
+## Step 2 — Vapi.ai Setup
 
-### 3a. Connect Twilio Phone Number
+### 2a. Create a Free Vapi Phone Number
 
-1. Log in to Vapi dashboard.
-2. Go to **Phone Numbers** → **Import Twilio Number**.
-3. Enter your Twilio Account SID and Auth Token.
-4. Select the phone number you purchased.
-5. Click **Import**.
+1. Log in to the Vapi dashboard (https://dashboard.vapi.ai).
+2. In the left navigation, click **Phone Numbers**.
+3. Click **Create a Phone Number** (or **+ Add Number**).
+4. Select the **"Free Vapi Number"** tab.
+5. Select an available U.S. area code or state.
+6. Click **Create** and record your newly assigned number (e.g. `+1 (XXX) XXX-XXXX`).
+   *(Note: No Twilio account, SIP trunking, or caller verification needed!)*
 
-### 3b. Create Custom LLM Provider
+### 2b. Create Custom LLM Provider (Groq)
 
-1. Go to **Models** → **Add Model** → **Custom LLM**.
+1. Go to **Providers** (or **Models**) → **Add Model** → **Custom LLM**.
 2. Configure:
    - Name: `Groq Llama 3.3 70B`
    - Endpoint: `https://api.groq.com/openai/v1/chat/completions`
    - Model: `llama-3.3-70b-versatile`
    - Headers: `Authorization: Bearer <YOUR_GROQ_API_KEY>`
-3. Save.
+3. Save and validate.
 
-### 3c. Create Assistant
+### 2c. Create Assistant
 
-1. Go to **Assistants** → **Create Assistant**.
+1. Go to **Assistants** → **Create Assistant** (Blank Template).
 2. Set:
    - Name: `Patient Registration Assistant`
-   - LLM: (the Groq custom model you just created)
-   - System prompt: (copy from `04-voice-agent-design.md`)
-   - First message: `Hello! Welcome to the patient registration line...`
-   - Voice: choose a U.S. English voice
+   - LLM: `Groq Llama 3.3 70B` (custom model from step 2b)
+   - First message: (copy from `11-vapi-assistant-config.md`)
+   - System prompt: (copy literal text from `11-vapi-assistant-config.md`)
+   - Voice: Choose a natural U.S. English voice (Deepgram Nova-2 STT)
 3. Add Tool: `register_patient`
-   - Type: Function
-   - Server URL: `https://<your-render-app>.onrender.com/patients` (update after Step 6)
+   - Type: Function / Custom Tool
+   - Server URL: `https://voice-patient-registration-b4n2.onrender.com/patients`
    - Method: POST
-   - Schema: (copy from `03-api-spec.md` → Vapi Tool Definition)
-4. Assign the imported Twilio number to this assistant.
+   - Schema: (copy exact JSON from `11-vapi-assistant-config.md`)
+4. In **Phone Numbers**, link your **Free Vapi Number** to this assistant.
 5. Save.
 
 ---
@@ -142,10 +131,10 @@ curl http://localhost:8000/health
 
 ## Step 7 — End-to-End Test
 
-- [ ] Call the Twilio number from a Twilio-verified phone number.
-- [ ] Complete the registration flow.
+- [ ] Call your Free Vapi Number from any phone.
+- [ ] Complete the registration flow with the voice assistant.
 - [ ] Verify record appears in Supabase Table Editor.
-- [ ] Test `GET /patients` via browser or curl.
+- [ ] Test `GET /patients` via browser or curl (`https://voice-patient-registration-b4n2.onrender.com/patients`).
 - [ ] Test `GET /patients/:id` with the new UUID.
 - [ ] Test `PUT /patients/:id` with a field change.
 - [ ] Test `DELETE /patients/:id` and verify `deleted_at` is set.
@@ -157,7 +146,7 @@ curl http://localhost:8000/health
 Render free Web Services spin down after 15 minutes of inactivity. To prevent this during demos:
 
 1. Use UptimeRobot (free) → New Monitor → HTTP(s).
-2. URL: `https://<app-name>.onrender.com/health`
+2. URL: `https://voice-patient-registration-b4n2.onrender.com/health`
 3. Interval: every 5 minutes.
 4. This will keep the service warm.
 
@@ -172,4 +161,4 @@ Render free Web Services spin down after 15 minutes of inactivity. To prevent th
 | Vapi tool call returns 422 | Invalid field format from LLM | Check system prompt validation rules |
 | Cold start takes >30s | Render free spin-up | Use keep-alive ping |
 | Groq rate limit error | Too many test calls | Wait 1 minute, calls reset |
-| Twilio call drops | Trial account restriction | Make sure caller number is verified |
+| Call does not connect | Free Vapi Number unassigned | Ensure assistant is selected in Phone Numbers tab |

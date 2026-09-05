@@ -1,4 +1,4 @@
-﻿# 04 · Voice Agent Design
+# 04 · Voice Agent Design
 
 ## Overview
 
@@ -202,7 +202,7 @@ Rules:
 - [ ] LLM: Custom LLM → Groq → `llama-3.3-70b-versatile`
 - [ ] First message: "Hello! Welcome to the patient registration line..."
 - [ ] Tool: `register_patient` → Server URL: `https://<render-app>.onrender.com/patients`
-- [ ] Phone number: Twilio number imported into Vapi
+- [ ] Phone number: Free Vapi Number (US area code) created in dashboard
 - [ ] End call after confirmation message: enabled
 - [ ] Recording: disabled (HIPAA consideration)
 - [ ] Max call duration: 10 minutes
