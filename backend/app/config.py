@@ -1,4 +1,4 @@
-﻿"""
+"""
 app/config.py
 -------------
 Application settings loaded from environment variables / .env file.
@@ -26,10 +26,10 @@ class Settings(BaseSettings):
     DATABASE_URL: str
 
     # ------------------------------------------------------------------
-    # Vapi — required
+    # Vapi — optional during build/migration, set in production
     # Webhook secret to verify inbound tool-call requests from Vapi.
     # ------------------------------------------------------------------
-    VAPI_WEBHOOK_SECRET: str
+    VAPI_WEBHOOK_SECRET: str = ""
 
     # ------------------------------------------------------------------
     # Application environment — required
