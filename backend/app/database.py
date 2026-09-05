@@ -1,4 +1,4 @@
-﻿"""
+"""
 app/database.py
 ---------------
 Async SQLAlchemy engine, session factory, and FastAPI dependency.
@@ -33,6 +33,10 @@ def _build_engine():
         pool_pre_ping=True,
         # Echo SQL only in development to avoid leaking PII to prod logs.
         echo=settings.is_development,
+        connect_args={
+            "statement_cache_size": 0,
+            "prepared_statement_cache_size": 0,
+        },
     )
 
 
