@@ -1,8 +1,10 @@
 # Voice Patient Registration
 
-A production-ready, voice AI-driven intake agent and backend pipeline for U.S. patient registration.
+A prototype voice-assisted patient intake service with a FastAPI backend and a Vapi webhook integration. It demonstrates collecting, validating, confirming, and storing registration fields; it is not a production-ready or clinically validated patient-registration system.
 
-Callers dial a real U.S. phone number and speak with an empathetic, conversational AI agent that collects essential registration details, accurately interprets accents and street addresses, offers optional information, performs a full verbal read-back for confirmation, handles real-time corrections, and persists the patient record into a cloud PostgreSQL database.
+The configured Vapi assistant can collect registration details by phone and submit them to the backend. The backend validates the submitted fields and requires a shared secret on the Vapi webhook. Speech recognition, accent accuracy, the spoken confirmation/correction flow, phone-number availability, and cloud persistence depend on external Vapi/Render/Supabase configuration and are not guaranteed by the backend code or its automated tests.
+
+> **Security and privacy:** The `/patients` CRUD endpoints currently have no authentication, including routes that list, create, update, and delete patient records. Do not expose this API to real patient data or the public internet without adding and verifying appropriate access controls, privacy safeguards, and operational protections. The webhook uses a shared-secret header or bearer token; it does not calculate an HMAC over the request body.
 
 ---
 
@@ -27,12 +29,12 @@ PSTN Caller (Mobile / Landline)
              │
              ▼
     Vapi.ai Voice Platform
-      ├─ Speech-to-Text: Soniox (STT RT v5 — 1.8% Word Error Rate)
-      ├─ LLM Engine:     GPT-5 Mini via Vapi OpenAI Integration (Cost Saver Preset)
-      ├─ Text-to-Speech: Vapi Elliot v2 (Low-latency native voice)
+      ├─ Speech-to-Text: provider/model configured in the Vapi assistant
+      ├─ LLM Engine:     Provider/model configured in the Vapi assistant
+      ├─ Text-to-Speech: Provider/model configured in the Vapi assistant
       └─ Tool Calling:   register_patient function call
              │
-             ▼  POST /vapi/register-patient (HMAC Secret Verified)
+             ▼  POST /vapi/register-patient (shared-secret header/bearer check)
     FastAPI Web Service (Render.com Free Tier)
       ├─ Routers:
       │    ├─ POST /vapi/register-patient  (Vapi Tool-Call Envelope Handler)
@@ -51,17 +53,15 @@ PSTN Caller (Mobile / Landline)
 
 | Layer | Technology | Version / Tier | Role |
 |---|---|---|---|
-| **Voice Platform** | **Vapi.ai** | Free Trial Credits ($10) | Managed telephony, speech streaming, and tool execution orchestration |
-| **Phone Gateway** | **Free Vapi Number** | Included in Vapi Trial | Direct inbound U.S. PSTN phone number (no external telephony carrier) |
-| **Speech-to-Text (STT)** | **Soniox (`STT RT v5`)** | Cost Saver ($0.004/min) | Ultra-low 1.8% Word Error Rate, accent-resilient transcription |
-| **Conversational LLM** | **GPT-5 Mini** | Cost Saver ($0.01/min) | Dialogue flow reasoning and strict JSON parameter extraction |
-| **Text-to-Speech (TTS)** | **Vapi Elliot v2** | Cost Saver ($0.02/min) | Natural, low-latency conversational voice synthesis |
+| **Voice Platform** | **Vapi.ai** | External account configuration | Managed telephony, speech streaming, and tool execution orchestration |
+| **Phone Gateway** | **Vapi phone number** | External account configuration | Inbound phone number provisioned in the Vapi account |
+| **Voice configuration** | **Vapi assistant** | External dashboard configuration | Telephony, speech recognition, LLM, speech synthesis, and tool-call behavior are configured outside this repository and can change independently. |
 | **API Framework** | **FastAPI** | >= 0.111.0 (Python 3.11+) | Async REST API, OpenAPI docs, and dedicated webhook router |
 | **Validation Layer** | **Pydantic v2** | >= 2.7.0 | Strict schema enforcement, ISO date validation, and E.164 parsing |
 | **ORM & Migrations** | **SQLAlchemy 2.x + Alembic** | Async (`asyncpg`) | Async relational persistence, schema versioning, and constraint checks |
 | **Database** | **Supabase Postgres** | Free Tier (500 MB) | Managed PostgreSQL with PgBouncer connection pooler |
 | **Cloud Hosting** | **Render.com** | Free Web Service | Automated Git deploys with TLS termination and environment management |
-| **Testing** | **pytest + pytest-asyncio + httpx** | Latest | Unit and integration test suite (11/11 automated tests passing) |
+| **Testing** | **pytest + pytest-asyncio + httpx** | Backend test suite | Tests cover API and webhook behavior using an in-memory test database; they do not validate the live voice assistant or cloud deployment. |
 
 ---
 
@@ -71,12 +71,9 @@ PSTN Caller (Mobile / Landline)
 * **Decision**: Deployed Vapi's built-in **Free Vapi Number** instead of Twilio SIP trunking.
 * **Rationale**: Twilio trial accounts are restricted or unavailable in certain developer countries and require caller-ID pre-verification for every outbound/inbound number. Vapi provides native, unverified U.S. PSTN numbers directly in the dashboard, enabling anyone to dial in immediately from any mobile phone or landline with zero provisioning barriers.
 
-### 2. Vapi Cost Saver Preset (Soniox / GPT-5 Mini / Elliot) vs. Groq Custom LLM
-* **Decision**: Swapped the originally planned external Groq (`llama-3.3-70b-versatile`) setup for Vapi's native **"Cost Saver" preset**.
-* **Rationale**:
-  - **Speech Accuracy**: Soniox `STT RT v5` delivers a **1.8% Word Error Rate** (compared to 3.3% on Deepgram Nova-2), which eliminated frequent acoustic errors on addresses and cities (e.g., mishearing *"Austin"* as *"Awesome"*).
-  - **Tool Calling Reliability**: GPT-5 Mini natively adhered to the function schema on the first turn without dropping optional attributes or formatting errors.
-  - **Cost & Latency**: Total call costs dropped from **$0.94** to **$0.31** for a 5-minute call (~67% savings, ~$0.065/min), billed directly through Vapi wallet credits without maintaining external API keys or hitting strict per-minute rate limits. *(Groq remains fully documented as an architectural fallback).*
+### 2. Voice provider configuration
+
+Vapi handles telephony and coordinates speech recognition, language-model responses, speech synthesis, and tool calls. The selected provider, model, and pricing are account-side configuration and may change; this repository does not measure recognition error rate, call latency, or cost. The backend accepts the Vapi tool-call request and validates it independently of those voice settings.
 
 ### 3. Supabase Postgres vs. SQLite
 * **Decision**: Used hosted Supabase PostgreSQL instead of a local SQLite database.
@@ -126,12 +123,12 @@ All REST endpoints return a standardized envelope:
 | Method | Endpoint | Description | Auth / Secret |
 |---|---|---|---|
 | `GET` | `/health` | Service health check | None |
-| `GET` | `/patients` | List active patients (supports `phone_number` filter) | None |
-| `GET` | `/patients/{id}` | Retrieve single patient by UUID | None |
-| `POST` | `/patients` | Create patient via standard REST body | None |
-| `PUT` | `/patients/{id}` | Update existing patient record | None |
-| `DELETE` | `/patients/{id}` | Soft-delete patient (`deleted_at` timestamp set) | None |
-| `POST` | `/vapi/register-patient` | Dedicated Vapi tool-call webhook endpoint | `X-Vapi-Secret` (Required) |
+| `GET` | `/patients` | List active patients with filters and pagination | **None (currently unauthenticated)** |
+| `GET` | `/patients/{id}` | Retrieve single patient by UUID | **None (currently unauthenticated)** |
+| `POST` | `/patients` | Create patient via standard REST body | **None (currently unauthenticated)** |
+| `PUT` | `/patients/{id}` | Update existing patient record | **None (currently unauthenticated)** |
+| `DELETE` | `/patients/{id}` | Soft-delete patient (`deleted_at` timestamp set) | **None (currently unauthenticated)** |
+| `POST` | `/vapi/register-patient` | Dedicated Vapi tool-call webhook endpoint | Shared secret via `X-Vapi-Secret` or `Authorization: Bearer` |
 
 ---
 
@@ -203,8 +200,7 @@ pytest tests/ -v
    - Render free instances spin down after 15 minutes of inactivity. The initial spin-up can take 30–50 seconds, which would cause a voice call webhook to time out if triggered while dormant.
    - **Mitigation**: An external keep-alive monitor (such as UptimeRobot) pinging `GET /health` every 5 minutes maintains warm instances.
 2. **Free-Tier Telephony & Database Quotas**:
-   - **Vapi**: Free trial includes ~$10 in credits (~120–150 minutes of calls on the Cost Saver preset).
-   - **Supabase**: Free tier permits up to 500 MB database storage and limited direct connections (mitigated by using Supabase's transaction pooler on port 6543).
+   - **Vapi and Supabase**: Usage limits, availability, and pricing depend on the current provider account and plan; check each provider's current dashboard and terms.
 3. **Duplicate Caller Detection (HTTP 409)**:
    - In the MVP, multiple registrations with the same phone number create separate patient records. Duplicate check and update branching is not enabled in this release (see Next Steps).
 
@@ -271,7 +267,7 @@ voice-patient-registration/
     │   │
     │   ├── routers/
     │   │   ├── __init__.py
-    │   │   ├── patients.py          # Public CRUD REST API endpoints
+      │   │   ├── patients.py          # Currently unauthenticated CRUD REST API endpoints
     │   │   └── vapi_webhook.py      # Dedicated Vapi tool-call webhook router
     │   │
     │   └── services/
