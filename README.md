@@ -123,40 +123,41 @@
 ## 🗣️ Conversational Intake Flow
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Greeting: Caller Dials In
-    Greeting --> CollectRequired: Ask First Name
+flowchart TD
+    Start([📞 Caller Dials In]) --> Greeting["Greeting & Explanation<br/><i>'I'm here to help you register...'</i>"]
     
-    state CollectRequired {
-        FirstName --> LastName
-        LastName --> DateOfBirth
-        DateOfBirth --> Sex
-        Sex --> PhoneNumber
-        PhoneNumber --> StreetAddress
-        StreetAddress --> City
-        City --> State
-        State --> ZipCode
-    }
-
-    CollectRequired --> OfferOptional: All 9 Required Gathered
+    subgraph P1 ["Phase 1: Sequential Required Intake"]
+        direction TB
+        F1["First & Last Name"] --> F2["Date of Birth (ISO YYYY-MM-DD)"]
+        F2 --> F3["Biological Sex (Enum)"]
+        F3 --> F4["Phone Number (+1 E.164)"]
+        F4 --> F5["Street Address"]
+        F5 --> F6["City & State (2-Letter Code)"]
+        F6 --> F7["ZIP Code (5 Digits)"]
+    end
     
-    state OfferOptional {
-        AskUser: "Would you like to provide optional details?"
-        AskUser --> CollectOptionalFields: Caller says Yes
-        AskUser --> ReadBack: Caller declines / skips
-        CollectOptionalFields --> ReadBack: Apt, Email, Insurance, Language, Emergency
-    }
-
-    ReadBack --> CallerConfirmation: "Does all that sound correct?"
+    Greeting --> P1
     
-    state CorrectionLoop {
-        CallerConfirmation --> EditField: Caller says No / Fixes item
-        EditField --> ReadBack: Update field and repeat summary
-    }
-
-    CallerConfirmation --> ExecuteTool: Caller confirms Yes
-    ExecuteTool --> ConfirmAndClose: HTTP 200 from Backend
-    ConfirmAndClose --> [*]: Hang Up
+    subgraph P2 ["Phase 2: Optional Fields Offer (Mandatory Step)"]
+        Offer{"'Would you like to provide<br/>optional details?'"}
+        Offer -- Yes --> OptFields["Collect: Apt/Suite, Email,<br/>Insurance, Language, Emergency"]
+        Offer -- No / Skip --> ReadBack
+        OptFields --> ReadBack
+    end
+    
+    P1 --> Offer
+    
+    subgraph P3 ["Phase 3: Verbal Confirmation & Correction Loop"]
+        ReadBack["Comprehensive Verbal Read-Back<br/><i>'Does all of that information sound correct?'</i>"]
+        Confirm{"Caller Confirms?"}
+        ReadBack --> Confirm
+        Confirm -- "No / Mistake" --> Correct["Acknowledge & Update Field"]
+        Correct --> ReadBack
+    end
+    
+    Confirm -- "Yes" --> ToolCall["Execute Tool: register_patient<br/><i>POST /vapi/register-patient</i>"]
+    ToolCall --> Success["Spoken Confirmation & Closing<br/><i>'Your registration is successfully saved!'</i>"]
+    Success --> EndCall([📴 Call Ends Cleanly])
 ```
 
 ---
